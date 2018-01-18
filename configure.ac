@@ -4,7 +4,7 @@
 AC_PREREQ([2.69])
 AC_INIT([libae], [1.0], [binape@126.com])
 
-# AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_AUX_DIR(examples)
 
 AC_CONFIG_SRCDIR([ae.c])
 AC_CONFIG_HEADERS([config.h])
@@ -34,4 +34,4 @@ AC_TYPE_UINT64_T
 # Checks for library functions.
 AC_CHECK_FUNCS([gettimeofday strtol])
 
-AC_OUTPUT(Makefile)
+AC_OUTPUT(Makefile examples/Makefile)
