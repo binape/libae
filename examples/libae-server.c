@@ -122,6 +122,8 @@ static void server_init(const char *bind_addr, uint16_t port)
     exit(EXIT_FAILURE);
   }
 
+  printf("[INFO] Server(%d) listen on: %s:%d\n", server.fd, bind_addr, port);
+
   aeCreateFileEvent(aeLoop, server.fd, AE_READABLE, (aeFileProc *) &server_cb, (void *)&server);
 }
 
@@ -144,6 +146,8 @@ static void server_close ()
     }
     free(server.clients);
   }
+
+  aeStop(aeLoop);
 }
 
 static void client_cb(struct aeEventLoop * aeLoop, int fd, void *clientData, int mask)
@@ -162,6 +166,7 @@ static void client_cb(struct aeEventLoop * aeLoop, int fd, void *clientData, int
 
   nbytes = recv(client->fd, (void *)&msg, sizeof(ae_msg_t), 0);
   if (nbytes <= 0) {
+    aeDeleteFileEvent(aeLoop, client->fd, AE_READABLE);
     if (nbytes == 0) {
       printf("[INFO] Client disconnected: %s:%d\n", host, port);
 
@@ -171,6 +176,8 @@ static void client_cb(struct aeEventLoop * aeLoop, int fd, void *clientData, int
       server.n_clients--;
     } else {
       perror("[ERROR] client_cb:: recv()");
+      server_close();
+      exit(EXIT_FAILURE);
     }
   }
 
@@ -195,7 +202,7 @@ static void server_cb(struct aeEventLoop * aeLoop, int fd, void *clientData, int
 
   if (mask == AE_READABLE && fd == server.fd) {
     {
-      for (;;) {
+      {
         addrlen = sizeof(struct sockaddr_in);
 
         client_fd = accept(server.fd, (struct sockaddr *)&client_addr, &addrlen);
@@ -243,6 +250,7 @@ static void server_cb(struct aeEventLoop * aeLoop, int fd, void *clientData, int
         client->slot = slot;
 
         server.clients[slot] = client;
+        server.n_clients++;
 
         fprintf(stdout, "[INFO] Client(%d) connected: %s: %d",
                 client_fd,
